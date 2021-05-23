@@ -3,7 +3,7 @@ from pygame.locals import *
 
 from config import *
 from game_objects.player import Player
-from game_objects.scene import TitleScene, SceneBase
+from game_objects.scene import TitleScene, SceneBase, GameScene
 from helpers import *
 
 
@@ -98,8 +98,10 @@ def run_game(width, height, fps):
     active_scene = TitleScene(screen,
                               'Press Enter to Start',
                               pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2))
+    # active_scene = GameScene(screen)
 
     while active_scene is not None:
+        screen.fill(Color('gray'))
         pressed_keys = pygame.key.get_pressed()
 
         # Event filtering

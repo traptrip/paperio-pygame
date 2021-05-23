@@ -1,7 +1,5 @@
 from config import CONSTS
-from helpers import (DrawableObj,
-                     in_polygon,
-                     batch_draw_territory,
+from helpers import (in_polygon,
                      get_neighboring_points,
                      get_vert_and_horiz_neighbours)
 
@@ -10,13 +8,12 @@ class Territory:
     def __init__(self, x, y, color):
         self.color = color
         self.points = {(x, y), *get_neighboring_points((x, y))}
-        self.changed = True
-
-    # def draw(self):
-    #     batch_draw_territory(self.points, self.color, self.changed)
-    #     self.changed = False
+        # self.changed = True
 
     def get_boundary(self):
+        """
+        :return: The boundary of player's territory
+        """
         boundary = []
         for point in self.points:
             if any([neighboring not in self.points for neighboring in get_neighboring_points(point)]):

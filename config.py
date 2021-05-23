@@ -43,8 +43,8 @@ class CONSTS:
         (141, 110, 99, 255)
     ]
 
-    EMPTY_CELL_COLOR = (10, 10, 10)
-    GRID_LINE_COLOR = (128, 128, 128)
+    EMPTY_CELL_COLOR = (220, 240, 244, 255)
+    GRID_LINE_COLOR = (128, 128, 128, 50)
 
     IMAGES = {
         'flash': pygame.image.load("../sprites/flash.png")

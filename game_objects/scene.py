@@ -27,22 +27,22 @@ class SceneBase:
 
 
 class Cell(DrawableObj):
-    def __init__(self, screen, pos=(0, 0), color=(0, 0, 0), image_name=None):
+    def __init__(self, screen, pos=(0, 0), color=(0, 0, 0, 255), image_name=None):
         super().__init__(screen)
         self.color = color
         self.prev_color = color
         self.image_name = image_name
         if image_name is not None:
             self.block = pygame.transform.scale(CONSTS.IMAGES[image_name], (CONSTS.WIDTH, CONSTS.HEIGHT))
-            self.block.set_colorkey(CONSTS.BLACK)
         else:
-            self.block = pygame.Surface((CONSTS.WIDTH, CONSTS.HEIGHT))
+            self.block = pygame.Surface((CONSTS.WIDTH, CONSTS.HEIGHT), pygame.SRCALPHA)
+        self.block.set_colorkey(CONSTS.BLACK)
         self.rect = self.block.get_rect()
         self.rect.topleft = pos
         self.pos = pos
 
     def draw(self):
-        self.block.fill(self.color)
+        pygame.draw.rect(self.block, self.color, self.block.get_rect())
         self.screen.blit(self.block, self.rect)
 
     def change_color(self, new_color):
@@ -117,22 +117,35 @@ class GameScene(SceneBase):
                 self.players[0].change_direction(event.key)
 
     def update(self):
-        self._update_grid()
+        self.__update_grid()
 
     def render(self):
         self.grid.draw()
 
-    def _update_grid(self):
+    def __update_grid(self):
         for player in self.players:
-            for point in player.territory.points:
-                self.grid[point].change_color(player.territory.color)
-                self.grid[point].prev_color = player.territory.color
+            self.__update_territory(player)
+            self.__update_player(player)
+            self.__update_player_lines(player)
 
-            prev_player_x, prev_player_y = player.x, player.y
-            player.move()
-            self.grid[prev_player_x, prev_player_y].change_color(self.grid[prev_player_x, prev_player_y].prev_color)
-            self.grid[player.x, player.y].change_color(player.color)
+    def __update_territory(self, player):
+        for point in player.territory.points:
+            self.grid[point].change_color(player.territory.color)
+            self.grid[point].prev_color = player.territory.color
 
+    def __update_player(self, player):
+        # player head
+        prev_player_x, prev_player_y = player.x, player.y
+        player.move()
+        self.grid[prev_player_x, prev_player_y].change_color(self.grid[prev_player_x, prev_player_y].prev_color)
+        self.grid[player.x, player.y].change_color(player.color)
+
+    def __update_player_lines(self, player):
+        # player lines
+        player.update_line()
+        for point in player.line_points:
+            if point != (player.x, player.y):
+                self.grid[point].change_color(player.line_color)
 
 
     # background_color = (220 / 255, 240 / 255, 244 / 255, 1)

@@ -72,10 +72,12 @@ class Player:
         self.id = player_id
         self.x = pos[0]
         self.y = pos[1]
-        self.color = [i - 25 if i >= 25 else i for i in color[:-1]] + [color[-1]]
-        self.line_color = list(color[:-1]) + [160]  # color of the player tail outside the territory
+        # color of player's head
+        self.color = [i - 35 if i >= 35 else i for i in color[:-1]] + [color[-1]]
+        # color of the player tail outside the territory
+        self.line_color = list(color[:-1]) + [150]
         self.territory = Territory(self.x, self.y, color)  # captured territory
-        self.lines = []  # player lines outside the territory
+        self.line_points = []  # player lines outside the territory
         self.name = name
         self.score = 0
         self.tick_score = 0
@@ -120,14 +122,14 @@ class Player:
 
 
     def draw_lines(self):
-        batch_draw(self.lines, self.line_color)
+        batch_draw(self.line_points, self.line_color)
 
     def draw_position(self):
         draw_square((self.x, self.y), self.color)
 
-    def update_lines(self):
-        if (self.x, self.y) not in self.territory.points or len(self.lines) > 0:
-            self.lines.append((self.x, self.y))
+    def update_line(self):
+        if (self.x, self.y) not in self.territory.points or len(self.line_points) > 0:
+            self.line_points.append((self.x, self.y))
 
     def tick_action(self): ...
         # for bonus in self.bonuses[:]:
