@@ -52,34 +52,31 @@ def get_square_coordinates(point):
             x - width, y + width)
 
 
-def get_diagonals(point):
-    width = CONSTS.WIDTH
+# TERRITORY HELPERS
+def get_diagonal_neighbours(point):
     x, y = point
-
     return [
-        (x + width, y + width),
-        (x - width, y + width),
-        (x + width, y - width),
-        (x - width, y - width)
+        (x + 1, y + 1),
+        (x - 1, y + 1),
+        (x + 1, y - 1),
+        (x - 1, y - 1)
     ]
 
 
-def get_vert_and_horiz(point):
-    width = CONSTS.WIDTH
+def get_vert_and_horiz_neighbours(point):
     x, y = point
-
     return [
-        (x, y + width),
-        (x - width, y),
-        (x, y - width),
-        (x + width, y),
+        (x, y + 1),
+        (x - 1, y),
+        (x, y - 1),
+        (x + 1, y),
     ]
 
 
-def get_neighboring(point):
+def get_neighboring_points(point):
     return [
-        *get_vert_and_horiz(point),
-        *get_diagonals(point)
+        *get_vert_and_horiz_neighbours(point),
+        *get_diagonal_neighbours(point)
     ]
 
 

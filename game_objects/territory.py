@@ -1,30 +1,31 @@
-from helpers import in_polygon, batch_draw_territory, get_neighboring, get_vert_and_horiz
-from constants import CONSTS
-import networkx as nx
+from config import CONSTS
+from helpers import (DrawableObj,
+                     in_polygon,
+                     batch_draw_territory,
+                     get_neighboring_points,
+                     get_vert_and_horiz_neighbours)
 
 
 class Territory:
     def __init__(self, x, y, color):
         self.color = color
-        self.points = {(x, y), *get_neighboring((x, y))}
-        # fro scripted_coll_8
-        # self.points = {(x, y), *get_neighboring((x, y)), (x - WIDTH, y - 3 * WIDTH), (x, y - 4 * WIDTH), (x + WIDTH, y - 3 * WIDTH)}
+        self.points = {(x, y), *get_neighboring_points((x, y))}
         self.changed = True
 
-    def draw(self):
-        batch_draw_territory(self.points, self.color, self.changed)
-        self.changed = False
+    # def draw(self):
+    #     batch_draw_territory(self.points, self.color, self.changed)
+    #     self.changed = False
 
     def get_boundary(self):
         boundary = []
         for point in self.points:
-            if any([neighboring not in self.points for neighboring in get_neighboring(point)]):
+            if any([neighboring not in self.points for neighboring in get_neighboring_points(point)]):
                 boundary.append(point)
         return boundary
 
     def _get_start_points(self, point, boundary):
         res = []
-        for neighbor in [point, *get_neighboring(point)]:
+        for neighbor in [point, *get_neighboring_points(point)]:
             if neighbor in boundary:
                 res.append(neighbor)
         return res
@@ -50,14 +51,14 @@ class Territory:
         return captured
 
     def is_siblings(self, p1, p2):
-        return p2 in get_vert_and_horiz(p1)
+        return p2 in get_vert_and_horiz_neighbours(p1)
 
     def get_voids_between_lines_and_territory(self, lines):
         boundary = self.get_boundary()
         graph = self.get_graph(boundary)
         voids = []
         for i_lp1, lp1 in enumerate(lines):
-            for point in get_neighboring(lp1):
+            for point in get_neighboring_points(lp1):
                 if point in boundary:
                     prev = None
                     for lp2 in lines[:i_lp1 + 1]:
@@ -87,7 +88,7 @@ class Territory:
     def capture_voids_between_lines(self, lines):
         captured = []
         for index, cur in enumerate(lines):
-            for point in get_neighboring(cur):
+            for point in get_neighboring_points(cur):
                 if point in lines:
                     end_index = lines.index(point)
                     path = lines[index:end_index + 1]
@@ -125,7 +126,7 @@ class Territory:
         return removed
 
     def get_siblings(self, point, boundary):
-        return [sibling for sibling in get_neighboring(point) if sibling in boundary]
+        return [sibling for sibling in get_neighboring_points(point) if sibling in boundary]
 
     def get_graph(self, boundary):
         graph = nx.Graph()

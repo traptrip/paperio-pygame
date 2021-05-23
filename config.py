@@ -5,7 +5,7 @@ import pygame
 
 
 class CONSTS:
-    FPS = 20  # частота кадров в секунду
+    FPS = 10  # частота кадров в секунду
     LINE_KILL_SCORE = 10
     MAX_TICK_COUNT = 2000
 
@@ -23,14 +23,14 @@ class CONSTS:
     DOWN = pygame.K_DOWN
 
     # характеристики персонажа
-    WIDTH = HEIGHT = 10  # ширина/высота клетки должно делиться на 2
+    WIDTH = HEIGHT = 20  # ширина/высота клетки должно делиться на 2
     SHAPE = (WIDTH, WIDTH)
     # BASE_SPEED = 3
     SPEED = 1
 
     # характеристики поля
-    Y_CELLS_COUNT = 60
-    X_CELLS_COUNT = 60
+    Y_CELLS_COUNT = 30
+    X_CELLS_COUNT = 30
     WINDOW_HEIGHT = Y_CELLS_COUNT * WIDTH
     WINDOW_WIDTH = X_CELLS_COUNT * WIDTH
 
@@ -43,8 +43,11 @@ class CONSTS:
         (141, 110, 99, 255)
     ]
 
-    EMPTY_CELL_COLOR = (80, 80, 80)
+    EMPTY_CELL_COLOR = (10, 10, 10)
+    GRID_LINE_COLOR = (128, 128, 128)
 
     IMAGES = {
         'flash': pygame.image.load("../sprites/flash.png")
     }
+
+    TERRITORY_CACHE = {}

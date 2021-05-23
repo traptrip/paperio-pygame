@@ -60,7 +60,7 @@ from helpers import get_random_coordinates
 
 
 from copy import copy
-# from game_objects.territory import Territory
+from game_objects.territory import Territory
 from config import CONSTS
 from helpers import batch_draw, draw_square
 
@@ -72,9 +72,9 @@ class Player:
         self.id = player_id
         self.x = pos[0]
         self.y = pos[1]
-        self.color = color
+        self.color = [i - 25 if i >= 25 else i for i in color[:-1]] + [color[-1]]
         self.line_color = list(color[:-1]) + [160]  # color of the player tail outside the territory
-        # self.territory = Territory(self.x, self.y, color)  # captured territory
+        self.territory = Territory(self.x, self.y, color)  # captured territory
         self.lines = []  # player lines outside the territory
         self.name = name
         self.score = 0
@@ -89,23 +89,23 @@ class Player:
         if command == CONSTS.UP and self.direction != CONSTS.DOWN:
             self.direction = CONSTS.UP
 
-        if command == CONSTS.DOWN and self.direction != CONSTS.UP:
+        elif command == CONSTS.DOWN and self.direction != CONSTS.UP:
             self.direction = CONSTS.DOWN
 
-        if command == CONSTS.LEFT and self.direction != CONSTS.RIGHT:
+        elif command == CONSTS.LEFT and self.direction != CONSTS.RIGHT:
             self.direction = CONSTS.LEFT
 
-        if command == CONSTS.RIGHT and self.direction != CONSTS.LEFT:
+        elif command == CONSTS.RIGHT and self.direction != CONSTS.LEFT:
             self.direction = CONSTS.RIGHT
 
     def move(self):
         if self.direction == CONSTS.UP:
             self.y -= self.speed
-        if self.direction == CONSTS.DOWN:
+        elif self.direction == CONSTS.DOWN:
             self.y += self.speed
-        if self.direction == CONSTS.LEFT:
+        elif self.direction == CONSTS.LEFT:
             self.x -= self.speed
-        if self.direction == CONSTS.RIGHT:
+        elif self.direction == CONSTS.RIGHT:
             self.x += self.speed
 
         if self.y < 0:
@@ -116,6 +116,8 @@ class Player:
             self.x = CONSTS.X_CELLS_COUNT - 1
         if self.x >= CONSTS.X_CELLS_COUNT:
             self.x = 0
+
+
 
     def draw_lines(self):
         batch_draw(self.lines, self.line_color)

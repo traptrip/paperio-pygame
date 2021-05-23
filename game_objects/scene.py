@@ -30,6 +30,7 @@ class Cell(DrawableObj):
     def __init__(self, screen, pos=(0, 0), color=(0, 0, 0), image_name=None):
         super().__init__(screen)
         self.color = color
+        self.prev_color = color
         self.image_name = image_name
         if image_name is not None:
             self.block = pygame.transform.scale(CONSTS.IMAGES[image_name], (CONSTS.WIDTH, CONSTS.HEIGHT))
@@ -85,6 +86,13 @@ class Grid(DrawableObj):
         for row in self.grid:
             for cell in row:
                 cell.draw()
+        self.draw_grid_lines()
+
+    def draw_grid_lines(self):
+        for y in range(CONSTS.HEIGHT, CONSTS.WINDOW_HEIGHT, CONSTS.HEIGHT):
+            pygame.draw.line(self.screen, CONSTS.GRID_LINE_COLOR, (0, y), (CONSTS.WINDOW_WIDTH, y))
+        for x in range(CONSTS.WIDTH, CONSTS.WINDOW_WIDTH, CONSTS.WIDTH):
+            pygame.draw.line(self.screen, CONSTS.GRID_LINE_COLOR, (x, 0), (x, CONSTS.WINDOW_HEIGHT))
 
     def __getitem__(self, pos):
         x, y = pos
@@ -116,10 +124,16 @@ class GameScene(SceneBase):
 
     def _update_grid(self):
         for player in self.players:
-            old_player_x, old_player_y = player.x, player.y
+            for point in player.territory.points:
+                self.grid[point].change_color(player.territory.color)
+                self.grid[point].prev_color = player.territory.color
+
+            prev_player_x, prev_player_y = player.x, player.y
             player.move()
-            self.grid[old_player_x, old_player_y].change_color(CONSTS.EMPTY_CELL_COLOR)
+            self.grid[prev_player_x, prev_player_y].change_color(self.grid[prev_player_x, prev_player_y].prev_color)
             self.grid[player.x, player.y].change_color(player.color)
+
+
 
     # background_color = (220 / 255, 240 / 255, 244 / 255, 1)
     # border_color = (144, 163, 174, 255)
