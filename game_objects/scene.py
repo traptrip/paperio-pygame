@@ -128,19 +128,29 @@ class GameScene(SceneBase):
             self.__update_player(player)
             self.__update_player_lines(player)
 
-    def __update_territory(self, player):
+    def __update_territory(self, player: Player):
+        captured = player.territory.capture(player.line_points)
+        if len(captured) > 0:
+            player.line_points.clear()
+            self.__update_score(player, len(captured))
+            player.territory.points.update(captured)
+
         for point in player.territory.points:
             self.grid[point].change_color(player.territory.color)
             self.grid[point].prev_color = player.territory.color
 
-    def __update_player(self, player):
+    @staticmethod
+    def __update_score(player: Player, captured_length):
+        player.tick_score += CONSTS.NEUTRAL_TERRITORY_SCORE * captured_length
+
+    def __update_player(self, player: Player):
         # player head
         prev_player_x, prev_player_y = player.x, player.y
         player.move()
         self.grid[prev_player_x, prev_player_y].change_color(self.grid[prev_player_x, prev_player_y].prev_color)
         self.grid[player.x, player.y].change_color(player.color)
 
-    def __update_player_lines(self, player):
+    def __update_player_lines(self, player: Player):
         # player lines
         player.update_line()
         for point in player.line_points:

@@ -10,12 +10,13 @@ class CONSTS:
     MAX_TICK_COUNT = 2000
 
     # Задаем цвета
-    WHITE = (255, 255, 255)
-    BLACK = (0, 0, 0)
-    RED = (255, 0, 0)
-    GREEN = (0, 255, 0)
-    BLUE = (0, 0, 255)
-    RANDOM_COLOR = tuple(random.randint(0, 255) for _ in range(3))
+    WHITE = (255, 255, 255, 255)
+    BLACK = (0, 0, 0, 255)
+    RED = (255, 0, 0, 255)
+    GREEN = (0, 255, 0, 255)
+    BLUE = (0, 0, 255, 255)
+    GREY = (128, 128, 128, 255)
+    RANDOM_COLOR = list(random.randint(0, 255) for _ in range(3)) + [255]
 
     LEFT = pygame.K_LEFT
     RIGHT = pygame.K_RIGHT
@@ -27,6 +28,7 @@ class CONSTS:
     SHAPE = (WIDTH, WIDTH)
     # BASE_SPEED = 3
     SPEED = 1
+    NEUTRAL_TERRITORY_SCORE = 0.8
 
     # характеристики поля
     Y_CELLS_COUNT = 30
@@ -44,7 +46,7 @@ class CONSTS:
     ]
 
     EMPTY_CELL_COLOR = (220, 240, 244, 255)
-    GRID_LINE_COLOR = (128, 128, 128, 50)
+    GRID_LINE_COLOR = (144, 163, 174, 64)
 
     IMAGES = {
         'flash': pygame.image.load("../sprites/flash.png")

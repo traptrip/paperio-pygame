@@ -101,7 +101,7 @@ def run_game(width, height, fps):
     # active_scene = GameScene(screen)
 
     while active_scene is not None:
-        screen.fill(Color('gray'))
+        screen.fill(CONSTS.WHITE)
         pressed_keys = pygame.key.get_pressed()
 
         # Event filtering

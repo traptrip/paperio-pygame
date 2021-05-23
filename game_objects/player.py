@@ -62,7 +62,6 @@ from helpers import get_random_coordinates
 from copy import copy
 from game_objects.territory import Territory
 from config import CONSTS
-from helpers import batch_draw, draw_square
 
 
 class Player:
@@ -76,8 +75,10 @@ class Player:
         self.color = [i - 35 if i >= 35 else i for i in color[:-1]] + [color[-1]]
         # color of the player tail outside the territory
         self.line_color = list(color[:-1]) + [150]
-        self.territory = Territory(self.x, self.y, color)  # captured territory
-        self.line_points = []  # player lines outside the territory
+        # captured territory
+        self.territory = Territory(self.x, self.y, color)
+        # player lines outside the territory
+        self.line_points = []
         self.name = name
         self.score = 0
         self.tick_score = 0
@@ -118,14 +119,6 @@ class Player:
             self.x = CONSTS.X_CELLS_COUNT - 1
         if self.x >= CONSTS.X_CELLS_COUNT:
             self.x = 0
-
-
-
-    def draw_lines(self):
-        batch_draw(self.line_points, self.line_color)
-
-    def draw_position(self):
-        draw_square((self.x, self.y), self.color)
 
     def update_line(self):
         if (self.x, self.y) not in self.territory.points or len(self.line_points) > 0:

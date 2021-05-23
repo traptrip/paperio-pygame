@@ -1,3 +1,4 @@
+import networkx as nx
 from config import CONSTS
 from helpers import (in_polygon,
                      get_neighboring_points,
@@ -8,7 +9,7 @@ class Territory:
     def __init__(self, x, y, color):
         self.color = color
         self.points = {(x, y), *get_neighboring_points((x, y))}
-        # self.changed = True
+        self.changed = True
 
     def get_boundary(self):
         """
@@ -20,11 +21,24 @@ class Territory:
                 boundary.append(point)
         return boundary
 
-    def _get_start_points(self, point, boundary):
+    @staticmethod
+    def __get_siblings(point, boundary):
+        return [sibling for sibling in get_neighboring_points(point) if sibling in boundary]
+
+    def get_graph(self, boundary):
+        graph = nx.Graph()
+        for index, point in enumerate(boundary):
+            siblings = self.__get_siblings(point, boundary)  # adjacent boundary points
+            for sibling in siblings:
+                graph.add_edge(index, boundary.index(sibling), weight=1)
+        return graph
+
+    @staticmethod
+    def _get_start_points(point, boundary):
         res = []
-        for neighbor in [point, *get_neighboring_points(point)]:
-            if neighbor in boundary:
-                res.append(neighbor)
+        for neighbour in [point, *get_neighboring_points(point)]:
+            if neighbour in boundary:
+                res.append(neighbour)
         return res
 
     def _capture(self, boundary):
@@ -37,34 +51,31 @@ class Territory:
         min_y = min(poligon_y_arr)
 
         captured = []
-        x = max_x
-        while x > min_x:
-            y = max_y
-            while y > min_y:
+        for x in range(max_x, min_x, -1):
+            for y in range(max_y, min_y, -1):
                 if (x, y) not in self.points and in_polygon(x, y, poligon_x_arr, poligon_y_arr):
                     captured.append((x, y))
-                y -= CONSTS.WIDTH
-            x -= CONSTS.WIDTH
         return captured
 
-    def is_siblings(self, p1, p2):
+    @staticmethod
+    def is_siblings(p1, p2):
         return p2 in get_vert_and_horiz_neighbours(p1)
 
-    def get_voids_between_lines_and_territory(self, lines):
-        boundary = self.get_boundary()
-        graph = self.get_graph(boundary)
+    def get_voids_between_player_line_and_territory(self, line_points):
+        boundary = self.get_boundary()  # get boundary of current territory
+        graph = self.get_graph(boundary)  # get graph representation of territory
         voids = []
-        for i_lp1, lp1 in enumerate(lines):
-            for point in get_neighboring_points(lp1):
-                if point in boundary:
-                    prev = None
-                    for lp2 in lines[:i_lp1 + 1]:
-                        start_points = self._get_start_points(lp2, boundary)
+        for idx_lp1, line_point1 in enumerate(line_points):
+            for neighbouring_point in get_neighboring_points(line_point1):
+                if neighbouring_point in boundary:
+                    prev_point = None
+                    for line_point2 in line_points[:idx_lp1 + 1]:
+                        start_points = self._get_start_points(line_point2, boundary)
                         for start_point in start_points:
-                            if prev and (self.is_siblings(prev, start_point) or prev == start_point):
-                                prev = start_point
+                            if prev_point and (self.is_siblings(prev_point, start_point) or prev_point == start_point):
+                                prev_point = start_point
                                 continue
-                            end_index = boundary.index(point)
+                            end_index = boundary.index(neighbouring_point)
                             start_index = boundary.index(start_point)
 
                             try:
@@ -76,40 +87,45 @@ class Territory:
                                 path = path[1:]
 
                             path = [boundary[index] for index in path]
-                            lines_path = lines[lines.index(lp2):i_lp1 + 1]
+                            lines_path = line_points[line_points.index(line_point2):idx_lp1 + 1]
 
                             voids.append(lines_path + path)
-                            prev = start_point
+                            prev_point = start_point
         return voids
 
-    def capture_voids_between_lines(self, lines):
-        captured = []
-        for index, cur in enumerate(lines):
-            for point in get_neighboring_points(cur):
-                if point in lines:
-                    end_index = lines.index(point)
-                    path = lines[index:end_index + 1]
-                    if len(path) >= 8:
-                        captured.extend(self._capture(path))
-        return captured
+    # def capture_voids_between_lines(self, lines):
+    #     captured = []
+    #     for index, cur in enumerate(lines):
+    #         for point in get_neighboring_points(cur):
+    #             if point in lines:
+    #                 end_index = lines.index(point)
+    #                 path = lines[index:end_index + 1]
+    #                 if len(path) >= 8:
+    #                     captured.extend(self._capture(path))
+    #     return captured
 
-    def capture(self, lines):
+    def capture(self, line_points):
         captured = set()
-        if len(lines) > 1:
-            if lines[-1] in self.points:
-                voids = self.get_voids_between_lines_and_territory(lines)
+        if len(line_points) > 1:
+            if line_points[-1] in self.points:
 
-                captured.update(self.capture_voids_between_lines(lines))
+                # capture unfilled area between player line and territory
+                voids = self.get_voids_between_player_line_and_territory(line_points)
 
-                for line in lines:
-                    if line not in self.points:
-                        captured.add(line)
+                # captured.update(self.capture_voids_between_lines(line_points))
+
+                # capture player lines
+                for line_point in line_points:
+                    if line_point not in self.points:
+                        captured.add(line_point)
 
                 for void in voids:
                     captured.update(self._capture(void))
         if len(captured) > 0:
             self.changed = True
         return captured
+
+
 
     def remove_points(self, points):
         removed = []
@@ -121,17 +137,6 @@ class Territory:
         if len(removed) > 0:
             self.changed = True
         return removed
-
-    def get_siblings(self, point, boundary):
-        return [sibling for sibling in get_neighboring_points(point) if sibling in boundary]
-
-    def get_graph(self, boundary):
-        graph = nx.Graph()
-        for index, point in enumerate(boundary):
-            siblings = self.get_siblings(point, boundary)
-            for sibling in siblings:
-                graph.add_edge(index, boundary.index(sibling), weight=1)
-        return graph
 
     def split(self, line, direction, player):
         removed = []
