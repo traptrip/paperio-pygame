@@ -22,6 +22,12 @@ class CONSTS:
     UP = pygame.K_UP
     DOWN = pygame.K_DOWN
 
+    A = pygame.K_a
+    D = pygame.K_d
+    W = pygame.K_w
+    S = pygame.K_s
+
+
     # характеристики персонажа
     SCALE = 2
     WIDTH = HEIGHT = 10 * SCALE  # ширина/высота клетки должно делиться на 2

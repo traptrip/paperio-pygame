@@ -1,6 +1,6 @@
 import pygame
 
-from game_objects.player import Player
+from game_objects.player import Player, Player2
 from config import CONSTS
 from helpers import DrawableObj
 
@@ -118,9 +118,9 @@ class GameScene(SceneBase):
         self.players = [Player(1, 'player1',
                                (CONSTS.X_CELLS_COUNT // 3, CONSTS.Y_CELLS_COUNT // 2),
                                CONSTS.PLAYER_COLORS[0]),
-                        # Player(2, 'player2',
-                        #        (CONSTS.X_CELLS_COUNT // 3 * 2, CONSTS.Y_CELLS_COUNT // 2),
-                        #        CONSTS.PLAYER_COLORS[1])
+                        Player2(2, 'player2',
+                                (CONSTS.X_CELLS_COUNT // 3 * 2, CONSTS.Y_CELLS_COUNT // 2),
+                                CONSTS.PLAYER_COLORS[1])
                         ]
         self.losers = []
         self.scene_status = {
@@ -155,8 +155,8 @@ class GameScene(SceneBase):
             player.territory.points.update(captured)
 
         for point in player.territory.points:
-            self.grid[point].change_color(player.territory.color if player.is_alive else CONSTS.EMPTY_CELL_COLOR)
-            self.grid[point].prev_color = player.territory.color if player.is_alive else CONSTS.EMPTY_CELL_COLOR
+            self.grid[point].change_color(player.territory.color)
+            self.grid[point].prev_color = player.territory.color
 
     @staticmethod
     def __update_score(player: Player, captured_length):
@@ -166,25 +166,22 @@ class GameScene(SceneBase):
         # player head
         prev_player_x, prev_player_y = player.x, player.y
         player.move()
-        if player.is_alive:
-            self.grid[prev_player_x, prev_player_y].change_color(self.grid[prev_player_x, prev_player_y].prev_color)
-            self.grid[player.x, player.y].change_color(player.color)
-        else:
-            self.grid[prev_player_x, prev_player_y].change_color(CONSTS.EMPTY_CELL_COLOR)
-            self.grid[player.x, player.y].change_color(CONSTS.EMPTY_CELL_COLOR)
+        self.grid[prev_player_x, prev_player_y].change_color(self.grid[prev_player_x, prev_player_y].prev_color)
+        self.grid[player.x, player.y].change_color(player.color)
 
     def __update_player_lines(self, player: Player):
         # player lines
         player.update_line()
         for point in player.line_points:
             if point != (player.x, player.y):
-                self.grid[point].change_color(player.line_color if player.is_alive else CONSTS.EMPTY_CELL_COLOR)
+                self.grid[point].change_color(player.line_color)
 
     def __update_scene_status(self):
         for player in self.players:
             if not player.is_alive:
                 self.losers.append(player)
                 self.players.remove(player)
+                self.__clear_board_from_player(player)
         if not self.players:
             self.switch2scene(TitleScene(self.screen,
                                          "GAME OVER",
@@ -198,6 +195,16 @@ class GameScene(SceneBase):
                                          pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),
                                          color=CONSTS.WHITE))
         return self.scene_status
+
+    def __clear_board_from_player(self, player: Player):
+        # clear the head and line points
+        for point in player.line_points:
+            self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
+        # clear territory
+        for point in player.territory.points:
+            self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
+
+
 
     # background_color = (220 / 255, 240 / 255, 244 / 255, 1)
     # border_color = (144, 163, 174, 255)
