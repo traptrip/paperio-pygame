@@ -55,7 +55,9 @@ class Player:
         elif self.direction == self.player_commands['right']:
             self.x += self.speed
 
-        if self.y < 0 or self.y >= CONSTS.Y_CELLS_COUNT or self.x < 0 or self.x >= CONSTS.X_CELLS_COUNT:
+        # check death collisions
+        if self.y < 0 or self.y >= CONSTS.Y_CELLS_COUNT or self.x < 0 or self.x >= CONSTS.X_CELLS_COUNT or \
+                (self.x, self.y) in self.line_points:
             if self.y < 0:
                 self.y += 1
             if self.y >= CONSTS.Y_CELLS_COUNT:
@@ -101,12 +103,12 @@ class Player:
             'position': (self.x, self.y),
         }
 
-    def is_ate(self, players_to_captured):
-        for p, captured in players_to_captured.items():
-            position, is_move = self.get_position()
-            if self != p and position in captured and (is_move or self.get_prev_position() in captured):
-                return True, p
-        return False, None
+    # def is_ate(self, players_to_captured):
+    #     for p, captured in players_to_captured.items():
+    #         position, is_move = self.get_position()
+    #         if self != p and position in captured and (is_move or self.get_prev_position() in captured):
+    #             return True, p
+    #     return False, None
 
 
 class Player2(Player):

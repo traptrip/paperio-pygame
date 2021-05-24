@@ -59,6 +59,7 @@ class TitleScene(SceneBase):
         self.fontsize = 72
         self.fontcolor = pygame.Color('black')
         self.background_color = color
+        self.background = pygame.Surface((CONSTS.WINDOW_WIDTH, CONSTS.WINDOW_HEIGHT), pygame.SRCALPHA)
         self.scene_status = {"status": "Menu"}
 
     def process_input(self, events, pressed_keys):
@@ -73,7 +74,8 @@ class TitleScene(SceneBase):
         return self.scene_status
 
     def render(self):
-        self.screen.fill(self.background_color)
+        pygame.draw.rect(self.background, self.background_color, self.background.get_rect())
+        self.screen.blit(self.background, self.background.get_rect())
         font = pygame.font.Font(self.fontname, self.fontsize)
         img = font.render(self.text, True, self.fontcolor)
         rect = img.get_rect()
@@ -118,9 +120,9 @@ class GameScene(SceneBase):
         self.players = [Player(1, 'player1',
                                (CONSTS.X_CELLS_COUNT // 3, CONSTS.Y_CELLS_COUNT // 2),
                                CONSTS.PLAYER_COLORS[0]),
-                        Player2(2, 'player2',
-                                (CONSTS.X_CELLS_COUNT // 3 * 2, CONSTS.Y_CELLS_COUNT // 2),
-                                CONSTS.PLAYER_COLORS[1])
+                        # Player2(2, 'player2',
+                        #         (CONSTS.X_CELLS_COUNT // 3 * 2, CONSTS.Y_CELLS_COUNT // 2),
+                        #         CONSTS.PLAYER_COLORS[1])
                         ]
         self.losers = []
         self.scene_status = {
@@ -128,10 +130,11 @@ class GameScene(SceneBase):
         }
 
     def process_input(self, events, pressed_keys):
-        for event in events:
-            if event.type == pygame.KEYDOWN:
-                for player in self.players:
+        for player in self.players:
+            for event in events:
+                if event.type == pygame.KEYDOWN:
                     player.change_direction(event.key)
+                    break
 
     def update(self):
         status = self.__update_scene_status()
@@ -186,7 +189,7 @@ class GameScene(SceneBase):
             self.switch2scene(TitleScene(self.screen,
                                          "GAME OVER",
                                          pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),
-                                         color=CONSTS.RED))
+                                         color=(255, 0, 0, 160)))
         if not any([any([self.grid[x, y].color == CONSTS.EMPTY_CELL_COLOR
                          for x in range(CONSTS.X_CELLS_COUNT)])
                     for y in range(CONSTS.Y_CELLS_COUNT)]):
@@ -203,74 +206,3 @@ class GameScene(SceneBase):
         # clear territory
         for point in player.territory.points:
             self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
-
-
-
-    # background_color = (220 / 255, 240 / 255, 244 / 255, 1)
-    # border_color = (144, 163, 174, 255)
-    # grid_color = (144, 163, 174, 64)
-    # border_width = 2
-    # game_over_label_color = (95, 99, 104, 255)
-    #
-    # leaderboard_color = (255, 255, 255, 128)
-    # leaderboard_width = 320
-    # leaderboard_height = 240
-    #
-    # leaderboard_rows_count = 0
-    # labels_buffer = []
-    #
-    # def __init__(self):
-    #     self.game_over_label = pygame.text.Label('GAME OVER', font_name='Times New Roman',
-    #                                              font_size=30,
-    #                                              color=self.game_over_label_color,
-    #                                              x=CONSTS.WINDOW_WIDTH / 2, y=CONSTS.WINDOW_HEIGHT / 2,
-    #                                              anchor_x='center', anchor_y='center')
-    #
-    # def clear(self):
-    #     self.window.clear()
-    #     self.draw_grid()
-    #
-    # def append_label_to_leaderboard(self, label, color):
-    #     if len(self.labels_buffer) > self.leaderboard_rows_count:
-    #         self.labels_buffer[self.leaderboard_rows_count].text = label
-    #         self.labels_buffer[self.leaderboard_rows_count].color = color
-    #     else:
-    #         self.labels_buffer.append(
-    #             pyglet.text.Label(label,
-    #                               font_name='Times New Roman',
-    #                               font_size=16,
-    #                               color=color,
-    #                               x=CONSTS.WINDOW_WIDTH - self.leaderboard_width + 20,
-    #                               y=CONSTS.WINDOW_HEIGHT - 20 - CONSTS.WIDTH / 2 - 30 * self.leaderboard_rows_count,
-    #                               anchor_x='left', anchor_y='center')
-    #         )
-    #     self.leaderboard_rows_count += 1
-    #
-    # def reset_leaderboard(self):
-    #     self.leaderboard_rows_count = 0
-    #
-    # def show_game_over(self, timeout=False):
-    #     self.game_over_label.text = 'TIMEOUT' if timeout else 'GAME OVER'
-    #     self.game_over_label.draw()
-    #
-    # def draw_grid(self):
-    #     self.grid.draw()
-    #
-    # def draw_border(self):
-    #     draw_line((0, 0), (0, CONSTS.WINDOW_HEIGHT), self.border_color, self.border_width)
-    #     draw_line((0, CONSTS.WINDOW_HEIGHT), (CONSTS.WINDOW_WIDTH, CONSTS.WINDOW_HEIGHT), self.border_color, self.border_width)
-    #     draw_line((CONSTS.WINDOW_WIDTH, CONSTS.WINDOW_HEIGHT), (CONSTS.WINDOW_WIDTH, 0), self.border_color, self.border_width)
-    #     draw_line((CONSTS.WINDOW_WIDTH, 0), (0, 0), self.border_color, self.border_width)
-    #
-    # def draw_leaderboard(self):
-    #     draw_quadrilateral((CONSTS.WINDOW_WIDTH - self.leaderboard_width, CONSTS.WINDOW_HEIGHT - self.leaderboard_height,
-    #                         CONSTS.WINDOW_WIDTH, CONSTS.WINDOW_HEIGHT - self.leaderboard_height,
-    #                         CONSTS.WINDOW_WIDTH, CONSTS.WINDOW_HEIGHT,
-    #                         CONSTS.WINDOW_WIDTH - self.leaderboard_width, CONSTS.WINDOW_HEIGHT),
-    #                        self.leaderboard_color)
-    #     for label in self.labels_buffer[:self.leaderboard_rows_count]:
-    #         label.draw()
-    #     self.reset_leaderboard()
-    #
-    #
-    #
