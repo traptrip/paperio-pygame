@@ -99,8 +99,8 @@ def run_game(width, height, fps):
                               'Press Enter to Start',
                               pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2))
     # active_scene = GameScene(screen)
-
-    while active_scene is not None:
+    endgame = False
+    while active_scene is not None and not endgame:
         screen.fill(CONSTS.WHITE)
         pressed_keys = pygame.key.get_pressed()
 
@@ -116,7 +116,9 @@ def run_game(width, height, fps):
                 filtered_events.append(event)
 
         active_scene.process_input(filtered_events, pressed_keys)
-        active_scene.update()
+        status = active_scene.update()
+        if status['status'] == 'endgame':
+            endgame = True
         active_scene.render()
 
         active_scene = active_scene.next_scene

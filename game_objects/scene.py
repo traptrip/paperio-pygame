@@ -50,7 +50,7 @@ class Cell(DrawableObj):
 
 
 class TitleScene(SceneBase):
-    def __init__(self, screen, text, pos):
+    def __init__(self, screen, text, pos, color=(255, 255, 255, 255)):
         SceneBase.__init__(self, screen)
         self.text = text
         self.pos = pos
@@ -58,14 +58,22 @@ class TitleScene(SceneBase):
         self.fontname = None
         self.fontsize = 72
         self.fontcolor = pygame.Color('black')
+        self.background_color = color
+        self.scene_status = {"status": "Menu"}
 
     def process_input(self, events, pressed_keys):
         for event in events:
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 # Move to the next scene when the user pressed Enter
                 self.switch2scene(GameScene(self.screen))
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.scene_status['status'] = 'endgame'
+
+    def update(self):
+        return self.scene_status
 
     def render(self):
+        self.screen.fill(self.background_color)
         font = pygame.font.Font(self.fontname, self.fontsize)
         img = font.render(self.text, True, self.fontcolor)
         rect = img.get_rect()
@@ -108,16 +116,27 @@ class GameScene(SceneBase):
         SceneBase.__init__(self, screen)
         self.grid = Grid(screen)
         self.players = [Player(1, 'player1',
-                               (11, 11),
-                               CONSTS.PLAYER_COLORS[0])]
+                               (CONSTS.X_CELLS_COUNT // 3, CONSTS.Y_CELLS_COUNT // 2),
+                               CONSTS.PLAYER_COLORS[0]),
+                        # Player(2, 'player2',
+                        #        (CONSTS.X_CELLS_COUNT // 3 * 2, CONSTS.Y_CELLS_COUNT // 2),
+                        #        CONSTS.PLAYER_COLORS[1])
+                        ]
+        self.losers = []
+        self.scene_status = {
+            "status": 'game'
+        }
 
     def process_input(self, events, pressed_keys):
         for event in events:
             if event.type == pygame.KEYDOWN:
-                self.players[0].change_direction(event.key)
+                for player in self.players:
+                    player.change_direction(event.key)
 
     def update(self):
+        status = self.__update_scene_status()
         self.__update_grid()
+        return status
 
     def render(self):
         self.grid.draw()
@@ -136,8 +155,8 @@ class GameScene(SceneBase):
             player.territory.points.update(captured)
 
         for point in player.territory.points:
-            self.grid[point].change_color(player.territory.color)
-            self.grid[point].prev_color = player.territory.color
+            self.grid[point].change_color(player.territory.color if player.is_alive else CONSTS.EMPTY_CELL_COLOR)
+            self.grid[point].prev_color = player.territory.color if player.is_alive else CONSTS.EMPTY_CELL_COLOR
 
     @staticmethod
     def __update_score(player: Player, captured_length):
@@ -147,16 +166,38 @@ class GameScene(SceneBase):
         # player head
         prev_player_x, prev_player_y = player.x, player.y
         player.move()
-        self.grid[prev_player_x, prev_player_y].change_color(self.grid[prev_player_x, prev_player_y].prev_color)
-        self.grid[player.x, player.y].change_color(player.color)
+        if player.is_alive:
+            self.grid[prev_player_x, prev_player_y].change_color(self.grid[prev_player_x, prev_player_y].prev_color)
+            self.grid[player.x, player.y].change_color(player.color)
+        else:
+            self.grid[prev_player_x, prev_player_y].change_color(CONSTS.EMPTY_CELL_COLOR)
+            self.grid[player.x, player.y].change_color(CONSTS.EMPTY_CELL_COLOR)
 
     def __update_player_lines(self, player: Player):
         # player lines
         player.update_line()
         for point in player.line_points:
             if point != (player.x, player.y):
-                self.grid[point].change_color(player.line_color)
+                self.grid[point].change_color(player.line_color if player.is_alive else CONSTS.EMPTY_CELL_COLOR)
 
+    def __update_scene_status(self):
+        for player in self.players:
+            if not player.is_alive:
+                self.losers.append(player)
+                self.players.remove(player)
+        if not self.players:
+            self.switch2scene(TitleScene(self.screen,
+                                         "GAME OVER",
+                                         pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),
+                                         color=CONSTS.RED))
+        if not any([any([self.grid[x, y].color == CONSTS.EMPTY_CELL_COLOR
+                         for x in range(CONSTS.X_CELLS_COUNT)])
+                    for y in range(CONSTS.Y_CELLS_COUNT)]):
+            self.switch2scene(TitleScene(self.screen,
+                                         f"WINNER: {self.players[0].name}",
+                                         pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),
+                                         color=CONSTS.WHITE))
+        return self.scene_status
 
     # background_color = (220 / 255, 240 / 255, 244 / 255, 1)
     # border_color = (144, 163, 174, 255)

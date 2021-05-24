@@ -1,4 +1,3 @@
-import os
 import random
 
 import pygame
@@ -24,16 +23,17 @@ class CONSTS:
     DOWN = pygame.K_DOWN
 
     # характеристики персонажа
-    WIDTH = HEIGHT = 20  # ширина/высота клетки должно делиться на 2
+    SCALE = 2
+    WIDTH = HEIGHT = 10 * SCALE  # ширина/высота клетки должно делиться на 2
     SHAPE = (WIDTH, WIDTH)
     # BASE_SPEED = 3
     SPEED = 1
     NEUTRAL_TERRITORY_SCORE = 0.8
 
     # характеристики поля
-    Y_CELLS_COUNT = 30
-    X_CELLS_COUNT = 30
-    WINDOW_HEIGHT = Y_CELLS_COUNT * WIDTH
+    Y_CELLS_COUNT = 60 // SCALE
+    X_CELLS_COUNT = int(1.2 * 60 // SCALE)
+    WINDOW_HEIGHT = Y_CELLS_COUNT * HEIGHT
     WINDOW_WIDTH = X_CELLS_COUNT * WIDTH
 
     PLAYER_COLORS = [
