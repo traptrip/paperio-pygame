@@ -27,7 +27,6 @@ class CONSTS:
     W = pygame.K_w
     S = pygame.K_s
 
-
     # характеристики персонажа
     SCALE = 2
     WIDTH = HEIGHT = 10 * SCALE  # ширина/высота клетки должно делиться на 2

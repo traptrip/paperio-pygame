@@ -3,6 +3,7 @@ from config import CONSTS
 from helpers import (in_polygon,
                      get_neighboring_points,
                      get_vert_and_horiz_neighbours)
+import numpy as np
 
 
 class Territory:
@@ -13,7 +14,7 @@ class Territory:
 
     def get_boundary(self):
         """
-        :return: The boundary of player's territory
+        Return the boundary of player's territory
         """
         boundary = []
         for point in self.points:
@@ -22,13 +23,13 @@ class Territory:
         return boundary
 
     @staticmethod
-    def __get_siblings(point, boundary):
+    def __get_boundary_siblings(point, boundary):
         return [sibling for sibling in get_neighboring_points(point) if sibling in boundary]
 
-    def get_graph(self, boundary):
+    def get_boundary_graph(self, boundary):
         graph = nx.Graph()
         for index, point in enumerate(boundary):
-            siblings = self.__get_siblings(point, boundary)  # adjacent boundary points
+            siblings = self.__get_boundary_siblings(point, boundary)  # adjacent boundary points
             for sibling in siblings:
                 graph.add_edge(index, boundary.index(sibling), weight=1)
         return graph
@@ -42,18 +43,18 @@ class Territory:
         return res
 
     def _capture(self, boundary):
-        poligon_x_arr = [x for x, _ in boundary]
-        poligon_y_arr = [y for _, y in boundary]
+        polygon_x_arr = [x for x, _ in boundary]
+        polygon_y_arr = [y for _, y in boundary]
 
-        max_x = max(poligon_x_arr)
-        max_y = max(poligon_y_arr)
-        min_x = min(poligon_x_arr)
-        min_y = min(poligon_y_arr)
+        max_x = max(polygon_x_arr)
+        max_y = max(polygon_y_arr)
+        min_x = min(polygon_x_arr)
+        min_y = min(polygon_y_arr)
 
         captured = []
         for x in range(max_x, min_x, -1):
             for y in range(max_y, min_y, -1):
-                if (x, y) not in self.points and in_polygon(x, y, poligon_x_arr, poligon_y_arr):
+                if (x, y) not in self.points and in_polygon(x, y, polygon_x_arr, polygon_y_arr):
                     captured.append((x, y))
         return captured
 
@@ -61,48 +62,20 @@ class Territory:
     def is_siblings(p1, p2):
         return p2 in get_vert_and_horiz_neighbours(p1)
 
-    def get_voids_between_player_line_and_territory(self, line_points):
+    def get_voids(self, line_points):
         boundary = self.get_boundary()  # get boundary of current territory
-        graph = self.get_graph(boundary)  # get graph representation of territory
-        voids = []
-        for idx_lp1, line_point1 in enumerate(line_points):
-            for neighbouring_point in get_neighboring_points(line_point1):
-                if neighbouring_point in boundary:
-                    prev_point = None
-                    for line_point2 in line_points[:idx_lp1 + 1]:
-                        start_points = self._get_start_points(line_point2, boundary)
-                        for start_point in start_points:
-                            if prev_point and (self.is_siblings(prev_point, start_point) or prev_point == start_point):
-                                prev_point = start_point
-                                continue
-                            end_index = boundary.index(neighbouring_point)
-                            start_index = boundary.index(start_point)
+        boundary_graph = self.get_boundary_graph(boundary)  # get graph representation of boundary
 
-                            try:
-                                path = nx.shortest_path(graph, end_index, start_index, weight='weight')
-                            except (nx.NetworkXNoPath, nx.NodeNotFound):
-                                continue
-
-                            if len(path) > 1 and path[0] == path[-1]:
-                                path = path[1:]
-
-                            path = [boundary[index] for index in path]
-                            lines_path = line_points[line_points.index(line_point2):idx_lp1 + 1]
-
-                            voids.append(lines_path + path)
-                            prev_point = start_point
-        return voids
-
-    # def capture_voids_between_lines(self, lines):
-    #     captured = []
-    #     for index, cur in enumerate(lines):
-    #         for point in get_neighboring_points(cur):
-    #             if point in lines:
-    #                 end_index = lines.index(point)
-    #                 path = lines[index:end_index + 1]
-    #                 if len(path) >= 8:
-    #                     captured.extend(self._capture(path))
-    #     return captured
+        end_index = boundary.index(line_points[-1])
+        start_point = self.__get_boundary_siblings(line_points[0], boundary)
+        start_index = boundary.index(start_point[0])
+        try:
+            path = nx.shortest_path(boundary_graph, end_index, start_index, weight='weight')
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            path = []
+        path = [boundary[index] for index in path]
+        
+        return line_points + path
 
     def capture(self, line_points):
         captured = set()
@@ -110,17 +83,15 @@ class Territory:
             if line_points[-1] in self.points:
 
                 # capture unfilled area between player line and territory
-                voids = self.get_voids_between_player_line_and_territory(line_points)
-
-                # captured.update(self.capture_voids_between_lines(line_points))
+                unfilled_area = self.get_voids(line_points)
 
                 # capture player lines
                 for line_point in line_points:
                     if line_point not in self.points:
                         captured.add(line_point)
 
-                for void in voids:
-                    captured.update(self._capture(void))
+                captured.update(self._capture(unfilled_area))
+
         if len(captured) > 0:
             self.changed = True
         return captured

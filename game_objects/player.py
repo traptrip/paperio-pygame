@@ -72,18 +72,8 @@ class Player:
         if (self.x, self.y) not in self.territory.points or len(self.line_points) > 0:
             self.line_points.append((self.x, self.y))
 
-    def tick_action(self): ...
-        # for bonus in self.bonuses[:]:
-        #     bonus.tick += 1
-        #
-        #     if bonus.tick >= bonus.active_ticks:
-        #         bonus.cancel(self)
-        #         self.bonuses.remove(bonus)
-
     def kill_player(self):
         self.is_alive = False
-        # self.territory.points.clear()
-        # self.line_points.clear()
 
     def get_state(self):
         return {
@@ -92,7 +82,6 @@ class Player:
             'territory': list(self.territory.points),
             'lines': copy(self.line_points),
             'position': (self.x, self.y),
-            # 'bonuses': self.get_bonuses_state()
         }
 
     def get_state_for_event(self):

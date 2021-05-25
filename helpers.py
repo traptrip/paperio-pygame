@@ -8,7 +8,7 @@ def get_random_coordinates():
 
 
 class Painter:
-    """Used to organize the drawing/ updating procedure. (FIFO)"""
+    """Used to organize the drawing / updating procedure. (FIFO)"""
 
     def __init__(self):
         self.paintings = []
@@ -22,8 +22,7 @@ class Painter:
 
 
 class DrawableObj:
-    """Abstract base-class for every drawable element.
-    """
+    """Abstract base-class for every drawable element."""
 
     def __init__(self, screen):
         self.screen = screen
