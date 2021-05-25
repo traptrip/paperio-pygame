@@ -3,7 +3,6 @@ from config import CONSTS
 from helpers import (in_polygon,
                      get_neighboring_points,
                      get_vert_and_horiz_neighbours)
-import numpy as np
 
 
 class Territory:
@@ -78,6 +77,10 @@ class Territory:
         return line_points + path
 
     def capture(self, line_points):
+        """
+        :param line_points: Points of player's capture line
+        :return: New captured points
+        """
         captured = set()
         if len(line_points) > 1:
             if line_points[-1] in self.points:
@@ -98,43 +101,43 @@ class Territory:
 
 
 
-    def remove_points(self, points):
-        removed = []
-        for point in points:
-            if point in self.points:
-                self.points.discard(point)
-                removed.append(point)
-
-        if len(removed) > 0:
-            self.changed = True
-        return removed
-
-    def split(self, line, direction, player):
-        removed = []
-        l_point = line[0]
-
-        if any([point in self.points for point in line]):
-            for point in list(self.points):
-                if direction in [CONSTS.UP, CONSTS.DOWN]:
-                    if player.x < l_point[0]:
-                        if point[0] >= l_point[0]:
-                            removed.append(point)
-                            self.points.discard(point)
-                    else:
-                        if point[0] <= l_point[0]:
-                            removed.append(point)
-                            self.points.discard(point)
-
-                if direction in [CONSTS.LEFT, CONSTS.RIGHT]:
-                    if player.y < l_point[1]:
-                        if point[1] >= l_point[1]:
-                            removed.append(point)
-                            self.points.discard(point)
-                    else:
-                        if point[1] <= l_point[1]:
-                            removed.append(point)
-                            self.points.discard(point)
-
-        if len(removed) > 0:
-            self.changed = True
-        return removed
+    # def remove_points(self, points):
+    #     removed = []
+    #     for point in points:
+    #         if point in self.points:
+    #             self.points.discard(point)
+    #             removed.append(point)
+    #
+    #     if len(removed) > 0:
+    #         self.changed = True
+    #     return removed
+    #
+    # def split(self, line, direction, player):
+    #     removed = []
+    #     l_point = line[0]
+    #
+    #     if any([point in self.points for point in line]):
+    #         for point in list(self.points):
+    #             if direction in [CONSTS.UP, CONSTS.DOWN]:
+    #                 if player.x < l_point[0]:
+    #                     if point[0] >= l_point[0]:
+    #                         removed.append(point)
+    #                         self.points.discard(point)
+    #                 else:
+    #                     if point[0] <= l_point[0]:
+    #                         removed.append(point)
+    #                         self.points.discard(point)
+    #
+    #             if direction in [CONSTS.LEFT, CONSTS.RIGHT]:
+    #                 if player.y < l_point[1]:
+    #                     if point[1] >= l_point[1]:
+    #                         removed.append(point)
+    #                         self.points.discard(point)
+    #                 else:
+    #                     if point[1] <= l_point[1]:
+    #                         removed.append(point)
+    #                         self.points.discard(point)
+    #
+    #     if len(removed) > 0:
+    #         self.changed = True
+    #     return removed

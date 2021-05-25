@@ -3,8 +3,8 @@ from config import CONSTS
 
 
 def get_random_coordinates():
-    return random.randint(CONSTS.SHAPE[0], CONSTS.WINDOW_WIDTH - CONSTS.SHAPE[0]), \
-           random.randint(CONSTS.SHAPE[0], CONSTS.WINDOW_HEIGHT - CONSTS.SHAPE[0])
+    return random.randint(2, CONSTS.X_CELLS_COUNT - 2), \
+           random.randint(2, CONSTS.Y_CELLS_COUNT - 2)
 
 
 class Painter:

@@ -2,7 +2,7 @@ import pygame
 
 from game_objects.player import Player, Player2
 from config import CONSTS
-from helpers import DrawableObj
+from helpers import DrawableObj, get_random_coordinates
 
 
 class SceneBase:
@@ -118,7 +118,7 @@ class GameScene(SceneBase):
         SceneBase.__init__(self, screen)
         self.grid = Grid(screen)
         self.players = [Player(1, 'player1',
-                               (CONSTS.X_CELLS_COUNT // 3, CONSTS.Y_CELLS_COUNT // 2),
+                               get_random_coordinates(),
                                CONSTS.PLAYER_COLORS[0]),
                         # Player2(2, 'player2',
                         #         (CONSTS.X_CELLS_COUNT // 3 * 2, CONSTS.Y_CELLS_COUNT // 2),

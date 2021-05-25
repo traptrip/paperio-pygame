@@ -5,7 +5,7 @@ from helpers import *
 
 def run_game(width, height, fps):
     pygame.init()
-    pygame.display.set_caption("PAPER IO")
+    pygame.display.set_caption("Grab The Map")
     screen = pygame.display.set_mode((width, height))
     screen.fill(CONSTS.GREY)
     clock = pygame.time.Clock()
