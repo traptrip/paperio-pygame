@@ -1,24 +1,12 @@
 import random
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 from config import CONSTS
 
 
 def get_random_coordinates():
-    return random.randint(2, CONSTS.X_CELLS_COUNT - 2), \
-           random.randint(2, CONSTS.Y_CELLS_COUNT - 2)
-
-
-class Painter:
-    """Used to organize the drawing / updating procedure. (FIFO)"""
-
-    def __init__(self):
-        self.paintings = []
-
-    def add(self, drawable_obj):
-        self.paintings.append(drawable_obj)
-
-    def paint(self):
-        for drawing in self.paintings:
-            drawing.draw()
+    return random.randint(CONSTS.X_CELLS_COUNT // 4, CONSTS.X_CELLS_COUNT - (CONSTS.X_CELLS_COUNT // 4)), \
+           random.randint(CONSTS.Y_CELLS_COUNT // 4, CONSTS.Y_CELLS_COUNT - (CONSTS.Y_CELLS_COUNT // 4))
 
 
 class DrawableObj:
@@ -62,18 +50,15 @@ def get_neighboring_points(point):
     ]
 
 
-def in_polygon(x, y, xp, yp):
+def in_polygon(x, y, boundary):
     """
     :param x: point x coordinate
     :param y: point y coordinate
-    :param xp: array of other x coords
-    :param yp: array of other y coords
+    :param boundary: a polygon
     :return: True if point is inside the polygon else False
     """
-    is_inside = False
-    for i in range(len(xp)):
-        if ((yp[i] <= y < yp[i - 1]) or (yp[i - 1] <= y < yp[i])) and \
-                (x > (xp[i - 1] - xp[i]) * (y - yp[i]) / (yp[i - 1] - yp[i]) + xp[i]):
-            is_inside = not is_inside
+    point = Point(x, y)
+    polygon = Polygon(boundary)
+    is_inside = polygon.contains(point)
 
     return is_inside

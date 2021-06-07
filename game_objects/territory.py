@@ -53,7 +53,8 @@ class Territory:
         captured = []
         for x in range(max_x, min_x, -1):
             for y in range(max_y, min_y, -1):
-                if (x, y) not in self.points and in_polygon(x, y, polygon_x_arr, polygon_y_arr):
+                # if (x, y) not in self.points and in_polygon(x, y, polygon_x_arr, polygon_y_arr):
+                if (x, y) not in self.points and in_polygon(x, y, boundary):
                     captured.append((x, y))
         return captured
 
@@ -97,47 +98,46 @@ class Territory:
 
         if len(captured) > 0:
             self.changed = True
+
         return captured
 
+    def remove_points(self, points):
+        removed = []
+        for point in points:
+            if point in self.points:
+                self.points.discard(point)
+                removed.append(point)
 
+        if len(removed) > 0:
+            self.changed = True
+        return removed
 
-    # def remove_points(self, points):
-    #     removed = []
-    #     for point in points:
-    #         if point in self.points:
-    #             self.points.discard(point)
-    #             removed.append(point)
-    #
-    #     if len(removed) > 0:
-    #         self.changed = True
-    #     return removed
-    #
-    # def split(self, line, direction, player):
-    #     removed = []
-    #     l_point = line[0]
-    #
-    #     if any([point in self.points for point in line]):
-    #         for point in list(self.points):
-    #             if direction in [CONSTS.UP, CONSTS.DOWN]:
-    #                 if player.x < l_point[0]:
-    #                     if point[0] >= l_point[0]:
-    #                         removed.append(point)
-    #                         self.points.discard(point)
-    #                 else:
-    #                     if point[0] <= l_point[0]:
-    #                         removed.append(point)
-    #                         self.points.discard(point)
-    #
-    #             if direction in [CONSTS.LEFT, CONSTS.RIGHT]:
-    #                 if player.y < l_point[1]:
-    #                     if point[1] >= l_point[1]:
-    #                         removed.append(point)
-    #                         self.points.discard(point)
-    #                 else:
-    #                     if point[1] <= l_point[1]:
-    #                         removed.append(point)
-    #                         self.points.discard(point)
-    #
-    #     if len(removed) > 0:
-    #         self.changed = True
-    #     return removed
+    def split(self, line, direction, player):
+        removed = []
+        l_point = line[0]
+
+        if any([point in self.points for point in line]):
+            for point in list(self.points):
+                if direction in [CONSTS.UP, CONSTS.DOWN]:
+                    if player.x < l_point[0]:
+                        if point[0] >= l_point[0]:
+                            removed.append(point)
+                            self.points.discard(point)
+                    else:
+                        if point[0] <= l_point[0]:
+                            removed.append(point)
+                            self.points.discard(point)
+
+                if direction in [CONSTS.LEFT, CONSTS.RIGHT]:
+                    if player.y < l_point[1]:
+                        if point[1] >= l_point[1]:
+                            removed.append(point)
+                            self.points.discard(point)
+                    else:
+                        if point[1] <= l_point[1]:
+                            removed.append(point)
+                            self.points.discard(point)
+
+        if len(removed) > 0:
+            self.changed = True
+        return removed

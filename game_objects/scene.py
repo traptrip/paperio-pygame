@@ -1,3 +1,6 @@
+import copy
+from typing import Dict, List
+
 import pygame
 
 from game_objects.player import Player, Player2
@@ -120,9 +123,9 @@ class GameScene(SceneBase):
         self.players = [Player(1, 'player1',
                                get_random_coordinates(),
                                CONSTS.PLAYER_COLORS[0]),
-                        # Player2(2, 'player2',
-                        #         (CONSTS.X_CELLS_COUNT // 3 * 2, CONSTS.Y_CELLS_COUNT // 2),
-                        #         CONSTS.PLAYER_COLORS[1])
+                        Player2(2, 'player2',
+                                (CONSTS.X_CELLS_COUNT // 3 * 2, CONSTS.Y_CELLS_COUNT // 2),
+                                CONSTS.PLAYER_COLORS[1])
                         ]
         self.losers = []
         self.scene_status = {
@@ -136,55 +139,140 @@ class GameScene(SceneBase):
                     player.change_direction(event.key)
                     break
 
+    @staticmethod
+    def collision_resolution(players_grabs: Dict[Player, set]):
+        pg = {player: grab for player, grab in players_grabs.items() if not player.is_eaten(players_grabs)[0]}
+        res_pg = {player: copy.copy(grab) for player, grab in pg.items()}
+        for player1, captured1 in pg.items():
+            for player2, captured2 in pg.items():
+                if player1 != player2:
+                    res_pg[player1].difference_update(captured2)  # remove captured2 from first players grabs
+        return res_pg
+
+    @staticmethod
+    def is_player_lose(player: Player, players: List[Player]):
+        is_lose = False
+
+        # face the boarder or cross the line
+        if player.y < 0 or player.y >= CONSTS.Y_CELLS_COUNT or player.x < 0 or player.x >= CONSTS.X_CELLS_COUNT or \
+                (player.x, player.y) in player.line_points[:-1]:
+            is_lose = True
+
+        # line crossed by other player
+        for p in players:
+            if (p.x, p.y) in player.line_points[:-1]:
+                if p != player:
+                    p.tick_score += CONSTS.LINE_KILL_SCORE
+                is_lose = True
+
+        # faced with other player
+        for p in players:
+            if (player.x, player.y) == (p.x, p.y) and p != player:
+                if len(player.line_points) >= len(p.line_points):  # win player with longer line
+                    is_lose = True
+
+        # if player lost his territory
+        if len(player.territory.points) == 0:
+            is_lose = True
+
+        return is_lose
+
+    def __clear_board_from_loser(self, player: Player):
+        # clear the head and line points
+        for point in player.line_points[:-1]:
+            self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
+        # clear territory
+        for point in player.territory.points:
+            self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
+
     def update(self):
         status = self.__update_scene_status()
-        self.__update_grid()
+        self.__update()
         return status
 
     def render(self):
+        for player in self.players:
+            self.__draw_player_territory(player)
+        for player in self.players:
+            self.__draw_player_head(player)
+            self.__draw_player_line(player)
         self.grid.draw()
 
-    def __update_grid(self):
+    def __update(self):
+        for p in self.players:
+            p.tick += 1
+        # move players
         for player in self.players:
-            self.__update_territory(player)
-            self.__update_player(player)
-            self.__update_player_lines(player)
+            if player.tick % player.moveable_tick == 0:
+                player.move()
 
-    def __update_territory(self, player: Player):
-        captured = player.territory.capture(player.line_points)
-        if len(captured) > 0:
-            player.line_points.clear()
-            self.__update_score(player, len(captured))
-            player.territory.points.update(captured)
+        # count captured territories
+        players_grabs = {}
+        for player in self.players:
+            if player.tick % player.moveable_tick == 0:
+                player.update_line()
+                captured = player.territory.capture(player.line_points)
+                players_grabs[player] = captured
+                if len(captured) > 0:
+                    player.line_points.clear()
+                    player.tick_score += CONSTS.NEUTRAL_TERRITORY_SCORE * len(captured)
 
+        # catch losers
+        for player in self.players:
+            is_lose = self.is_player_lose(player, self.players)
+            if is_lose:
+                self.losers.append(player)
+
+        # collision resolving
+        players_grabs = self.collision_resolution(players_grabs)
+
+        # update losers list
+        for player in self.players:
+            is_lose, p = player.is_eaten(players_grabs)
+            if is_lose:
+                self.losers.append(player)
+
+        # update territories
+        for player in self.players:
+            captured = players_grabs.get(player, set())
+
+            # player.tick_action()
+
+            if captured:
+                player.territory.points.update(captured)
+                for p in self.players:
+                    if p != player:
+                        removed = p.territory.remove_points(captured)
+                        player.tick_score += \
+                            (CONSTS.ENEMY_TERRITORY_SCORE - CONSTS.NEUTRAL_TERRITORY_SCORE) * len(removed)
+
+        # remove losers from players list
+        for player in self.losers:
+            if player in self.players:
+                self.players.remove(player)
+                self.__clear_board_from_loser(player)
+
+        # update players scores
+        for player in self.players:
+            player.score += player.tick_score
+            player.tick_score = 0
+
+    def __draw_player_territory(self, player):
         for point in player.territory.points:
             self.grid[point].change_color(player.territory.color)
             self.grid[point].prev_color = player.territory.color
 
-    @staticmethod
-    def __update_score(player: Player, captured_length):
-        player.tick_score += CONSTS.NEUTRAL_TERRITORY_SCORE * captured_length
-
-    def __update_player(self, player: Player):
-        # player head
-        prev_player_x, prev_player_y = player.x, player.y
-        player.move()
-        self.grid[prev_player_x, prev_player_y].change_color(self.grid[prev_player_x, prev_player_y].prev_color)
-        self.grid[player.x, player.y].change_color(player.color)
-
-    def __update_player_lines(self, player: Player):
-        # player lines
-        player.update_line()
+    def __draw_player_line(self, player):
         for point in player.line_points:
             if point != (player.x, player.y):
                 self.grid[point].change_color(player.line_color)
 
+    def __draw_player_head(self, player):
+        if player.prev_x is not None:
+            self.grid[player.prev_x, player.prev_y].change_color(self.grid[player.prev_x, player.prev_y].prev_color)
+        self.grid[player.x, player.y].change_color(player.color)
+
     def __update_scene_status(self):
-        for player in self.players:
-            if not player.is_alive:
-                self.losers.append(player)
-                self.players.remove(player)
-                self.__clear_board_from_player(player)
         if not self.players:
             self.switch2scene(TitleScene(self.screen,
                                          "GAME OVER",
@@ -197,12 +285,10 @@ class GameScene(SceneBase):
                                          f"WINNER: {self.players[0].name}",
                                          pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),
                                          color=CONSTS.WHITE))
-        return self.scene_status
 
-    def __clear_board_from_player(self, player: Player):
-        # clear the head and line points
-        for point in player.line_points:
-            self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
-        # clear territory
-        for point in player.territory.points:
-            self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
+        # if len(self.players) == 1:
+        #     self.switch2scene(TitleScene(self.screen,
+        #                                  f"WINNER: {self.players[0].name}",
+        #                                  pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),
+        #                                  color=CONSTS.WHITE))
+        return self.scene_status

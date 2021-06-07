@@ -4,7 +4,7 @@ import pygame
 
 
 class CONSTS:
-    FPS = 10  # частота кадров в секунду
+    FPS = 35  # частота кадров в секунду
     LINE_KILL_SCORE = 10
     MAX_TICK_COUNT = 2000
 
@@ -33,11 +33,13 @@ class CONSTS:
     SHAPE = (WIDTH, WIDTH)
     # BASE_SPEED = 3
     SPEED = 1
-    NEUTRAL_TERRITORY_SCORE = 0.8
+    MOVEABLE_TICKS = 4
+    NEUTRAL_TERRITORY_SCORE = 0.6
+    ENEMY_TERRITORY_SCORE = 0.9
 
     # характеристики поля
     Y_CELLS_COUNT = 60 // SCALE
-    X_CELLS_COUNT = int(1.2 * 60 // SCALE)
+    X_CELLS_COUNT = int(1.5 * 60 // SCALE)
     WINDOW_HEIGHT = Y_CELLS_COUNT * HEIGHT
     WINDOW_WIDTH = X_CELLS_COUNT * WIDTH
 
