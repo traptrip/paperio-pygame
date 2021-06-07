@@ -8,13 +8,17 @@ class Player:
 
     def __init__(self, player_id, name, pos, color):
         self.id = player_id
+        self.name = name
         self.x = self.prev_x = pos[0]
         self.y = self.prev_y = pos[1]
-        self.player_commands = {
+        self.move_commands = {
             'up': CONSTS.UP,
             'down': CONSTS.DOWN,
             'left': CONSTS.LEFT,
-            'right': CONSTS.RIGHT
+            'right': CONSTS.RIGHT,
+        }
+        self.extra_commands = {
+            'nitro': CONSTS.NITRO1
         }
         # color of player's head
         self.color = [i - 35 if i >= 35 else i for i in color[:-1]] + [color[-1]]
@@ -24,27 +28,30 @@ class Player:
         self.territory = Territory(self.x, self.y, color)
         # player lines outside the territory
         self.line_points = []
-        self.name = name
+
         self.score = 0
         self.tick_score = 0
-        self.direction = self.player_commands['up']
+        self.direction = self.move_commands['up']
         self.tick = 0
+
+        # bonuses
         self.moveable_tick = CONSTS.MOVEABLE_TICKS
-        self.speed = CONSTS.SPEED
+        self.extra_life = False
+        self.bonuses = []
 
     def change_direction(self, command):
         true_dir = self.__get_true_direction()
-        if command == self.player_commands['up'] and true_dir != 'down':
-            self.direction = self.player_commands['up']
+        if command == self.move_commands['up'] and true_dir != 'down':
+            self.direction = self.move_commands['up']
 
-        elif command == self.player_commands['down'] and true_dir != 'up':
-            self.direction = self.player_commands['down']
+        elif command == self.move_commands['down'] and true_dir != 'up':
+            self.direction = self.move_commands['down']
 
-        elif command == self.player_commands['left'] and true_dir != 'right':
-            self.direction = self.player_commands['left']
+        elif command == self.move_commands['left'] and true_dir != 'right':
+            self.direction = self.move_commands['left']
 
-        elif command == self.player_commands['right'] and true_dir != 'left':
-            self.direction = self.player_commands['right']
+        elif command == self.move_commands['right'] and true_dir != 'left':
+            self.direction = self.move_commands['right']
 
     def __get_true_direction(self):
         x_dir = self.x - self.prev_x
@@ -62,35 +69,18 @@ class Player:
 
     def move(self):
         self.prev_x, self.prev_y = self.x, self.y
-        if self.direction == self.player_commands['up']:
-            self.y -= self.speed
-        elif self.direction == self.player_commands['down']:
-            self.y += self.speed
-        elif self.direction == self.player_commands['left']:
-            self.x -= self.speed
-        elif self.direction == self.player_commands['right']:
-            self.x += self.speed
+        if self.direction == self.move_commands['up']:
+            self.y -= 1
+        elif self.direction == self.move_commands['down']:
+            self.y += 1
+        elif self.direction == self.move_commands['left']:
+            self.x -= 1
+        elif self.direction == self.move_commands['right']:
+            self.x += 1
 
     def update_line(self):
         if (self.x, self.y) not in self.territory.points or len(self.line_points) > 0:
             self.line_points.append((self.x, self.y))
-
-    def get_state(self):
-        return {
-            'score': self.score,
-            'direction': self.direction,
-            'territory': list(self.territory.points),
-            'lines': copy(self.line_points),
-            'position': (self.x, self.y),
-        }
-
-    def get_state_for_event(self):
-        return {
-            'id': self.id,
-            'direction': self.direction,
-            'lines_length': len(self.line_points),
-            'position': (self.x, self.y),
-        }
 
     def get_position(self):
         return self.x, self.y
@@ -106,37 +96,37 @@ class Player:
                 return True, p
         return False, None
 
+    def nitro(self, activate=True):
+        for bonus in self.bonuses:
+            if bonus.name == 'Nitro':
+                bonus.activated = activate
+                if activate:
+                    self.moveable_tick = 1
+                else:
+                    bonus.cancel(self)
+
+    def tick_action(self):
+        for bonus in self.bonuses:
+            if bonus.name == 'Nitro' and bonus.activated:
+                bonus.tick += 1
+                if bonus.tick >= bonus.active_ticks:
+                    bonus.cancel(self)
+                    self.bonuses.remove(bonus)
+
 
 class Player2(Player):
     def __init__(self, player_id, name, pos, color):
         super().__init__(player_id, name, pos, color)
-        self.player_commands = {
+        self.move_commands = {
             'up': CONSTS.W,
             'down': CONSTS.S,
             'left': CONSTS.A,
-            'right': CONSTS.D
+            'right': CONSTS.D,
         }
-        self.direction = self.player_commands['up']
+        self.extra_commands = {
+            'nitro': CONSTS.NITRO2
+        }
+        self.direction = self.move_commands['up']
 
     # def move(self):
-    #     if self.direction == self.player_commands['up']:
-    #         self.y -= 0
-    #     elif self.direction == self.player_commands['down']:
-    #         self.y += 0
-    #     elif self.direction == self.player_commands['left']:
-    #         self.x -= 0
-    #     elif self.direction == self.player_commands['right']:
-    #         self.x += 0
-    #
-    #     # check death collisions
-    #     if self.y < 0 or self.y >= CONSTS.Y_CELLS_COUNT or self.x < 0 or self.x >= CONSTS.X_CELLS_COUNT or \
-    #             (self.x, self.y) in self.line_points:
-    #         if self.y < 0:
-    #             self.y += 1
-    #         if self.y >= CONSTS.Y_CELLS_COUNT:
-    #             self.y -= 1
-    #         if self.x < 0:
-    #             self.x += 1
-    #         if self.x >= CONSTS.X_CELLS_COUNT:
-    #             self.x -= 1
-    #         self.kill_player()
+    #     pass

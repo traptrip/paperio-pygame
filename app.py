@@ -12,7 +12,7 @@ def run_game(width, height, fps):
 
     active_scene = TitleScene(screen,
                               'Press Enter to Start',
-                              pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2))
+                              pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.GRID_HEIGHT // 2))
     # active_scene = GameScene(screen)
     endgame = False
     while active_scene is not None and not endgame:
@@ -43,4 +43,4 @@ def run_game(width, height, fps):
 
 
 if __name__ == '__main__':
-    run_game(CONSTS.WINDOW_WIDTH, CONSTS.WINDOW_HEIGHT, CONSTS.FPS)
+    run_game(CONSTS.WINDOW_WIDTH, CONSTS.GRID_HEIGHT, CONSTS.FPS)

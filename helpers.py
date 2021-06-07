@@ -62,3 +62,18 @@ def in_polygon(x, y, boundary):
     is_inside = polygon.contains(point)
 
     return is_inside
+
+
+def is_available_point(x, y, players, busy_points):
+    for p in players:
+        if (p.x - 4 <= x <= p.x + 4) and (p.y - 4 <= y <= p.y + 4):
+            return False
+    return (x, y) not in busy_points
+
+
+def generate_coordinates(players, busy_points):
+    x, y = get_random_coordinates()
+    while not is_available_point(x, y, players, busy_points):
+        x, y = get_random_coordinates()
+    return x, y
+
