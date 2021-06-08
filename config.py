@@ -6,7 +6,7 @@ import pygame
 class CONSTS:
     FPS = 20  # частота кадров в секунду
     LINE_KILL_SCORE = 10
-    MAX_TICK_COUNT = 2000
+    MAX_TICK_COUNT = 1000
 
     # Задаем цвета
     WHITE = (255, 255, 255, 255)
@@ -15,6 +15,7 @@ class CONSTS:
     GREEN = (0, 255, 0, 255)
     BLUE = (0, 0, 255, 255)
     GREY = (128, 128, 128, 255)
+    GOLD = (255, 225, 0, 255)
     RANDOM_COLOR = list(random.randint(0, 255) for _ in range(3)) + [255]
 
     LEFT = pygame.K_LEFT
@@ -45,7 +46,7 @@ class CONSTS:
     GRID_HEIGHT = Y_CELLS_COUNT * HEIGHT
     GRID_WIDTH = X_CELLS_COUNT * WIDTH
     WINDOW_HEIGHT = GRID_HEIGHT
-    WINDOW_WIDTH = GRID_WIDTH #+ 10 * WIDTH
+    WINDOW_WIDTH = GRID_WIDTH + 10 * WIDTH
 
     PLAYER_COLORS = [
         (90, 159, 153, 255),

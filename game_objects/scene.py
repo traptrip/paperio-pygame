@@ -3,9 +3,11 @@ import copy
 from typing import Dict, List
 
 import pygame
+import pygame.freetype
 
 from game_objects.player import Player, Player2
 from game_objects.bonuses import Bonus, Nitro, ExtraLife
+from game_objects.territory import Territory
 from config import CONSTS
 from helpers import DrawableObj, get_random_coordinates, generate_coordinates
 
@@ -52,31 +54,36 @@ class Cell(DrawableObj):
 
     def change_color(self, new_color):
         self.color = new_color
-        
+
     def change_image(self, image_name):
         self.block = pygame.transform.scale(CONSTS.IMAGES[image_name], (CONSTS.WIDTH, CONSTS.HEIGHT))
         self.block.set_colorkey(CONSTS.BLACK)
         self.rect = self.block.get_rect()
-        
 
-class TitleScene(SceneBase):
+
+class StartScene(SceneBase):
     def __init__(self, screen, text, pos, color=(255, 255, 255, 255)):
         SceneBase.__init__(self, screen)
         self.text = text
-        self.pos = pos
 
         self.fontname = None
-        self.fontsize = 72
+        self.headfontsize = 72
+        self.pos = (pos[0], pos[1] - 2 * self.headfontsize)
+
         self.fontcolor = pygame.Color('black')
         self.background_color = color
-        self.background = pygame.Surface((CONSTS.WINDOW_WIDTH, CONSTS.GRID_HEIGHT), pygame.SRCALPHA)
+        self.background = pygame.Surface((CONSTS.WINDOW_WIDTH, CONSTS.WINDOW_HEIGHT), pygame.SRCALPHA)
         self.scene_status = {"status": "Menu"}
 
     def process_input(self, events, pressed_keys):
         for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_1:
                 # Move to the next scene when the user pressed Enter
-                self.switch2scene(GameScene(self.screen))
+                self.switch2scene(GameScene(self.screen, game_mode='classic'))
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_2:
+                # Move to the next scene when the user pressed Enter
+                self.switch2scene(GameScene(self.screen, game_mode='timeLIMIT'))
+
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 self.scene_status['status'] = 'endgame'
 
@@ -86,11 +93,68 @@ class TitleScene(SceneBase):
     def render(self):
         pygame.draw.rect(self.background, self.background_color, self.background.get_rect())
         self.screen.blit(self.background, self.background.get_rect())
-        font = pygame.font.Font(self.fontname, self.fontsize)
+        font = pygame.font.Font(self.fontname, self.headfontsize)
         img = font.render(self.text, True, self.fontcolor)
         rect = img.get_rect()
         rect.center = self.pos
         self.screen.blit(img, rect)
+
+        font = pygame.font.Font(self.fontname, 42)
+        img = font.render('Press 1 to start Classic Mode', True, self.fontcolor)
+        rect = img.get_rect()
+        rect.center = [self.pos[0], self.pos[1] + self.headfontsize]
+        self.screen.blit(img, rect)
+
+        font = pygame.font.Font(self.fontname, 42)
+        img = font.render('Press 2 to start TimeLimit Mode', True, self.fontcolor)
+        rect = img.get_rect()
+        rect.center = [self.pos[0], self.pos[1] + self.headfontsize + 42]
+        self.screen.blit(img, rect)
+
+
+class EndGameScene(StartScene):
+    def __init__(self, screen, text, pos, color=(255, 255, 255, 255), players=None):
+        super().__init__(screen, text, pos, color)
+        self.fontsize = 32
+        pygame.freetype.init()
+        self.font = pygame.freetype.Font(None, self.fontsize)
+        self.players = players if players is not None else []
+
+    def process_input(self, events, pressed_keys):
+        for event in events:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.switch2scene(StartScene(self.screen,
+                                             'Grab The Map',
+                                             pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.GRID_HEIGHT // 2)))
+
+    def update(self):
+        return self.scene_status
+
+    def render(self):
+        self.font.render_to(self.screen,
+                            (10, CONSTS.WINDOW_HEIGHT - (2 * self.fontsize)),
+                            "Press Esc - open Start Page",
+                            CONSTS.BLACK,
+                            None, size=self.fontsize//2)
+
+        self.font.render_to(self.screen,
+                            (10, 4),
+                            "SCORES",
+                            CONSTS.BLACK,
+                            None, size=self.headfontsize)
+        for i, player in enumerate(self.players):
+            if i == 0 and player.score > 0:
+                self.font.render_to(self.screen,
+                                    (10, self.headfontsize + 4 + i * self.fontsize),
+                                    f"{player.name}: {int(player.score)}",
+                                    CONSTS.GOLD,
+                                    None, size=self.fontsize+2)
+            else:
+                self.font.render_to(self.screen,
+                                    (10, self.headfontsize + 4 + i * self.fontsize),
+                                    f"{player.name}: {int(player.score)}",
+                                    CONSTS.BLACK,
+                                    None, size=self.fontsize)
 
 
 class Grid(DrawableObj):
@@ -126,8 +190,11 @@ class Grid(DrawableObj):
 
 
 class GameScene(SceneBase):
-    def __init__(self, screen):
+    def __init__(self, screen, game_mode='classic'):
         SceneBase.__init__(self, screen)
+        self.game_mode = game_mode
+        self.tick = 0
+        self.max_ticks = CONSTS.MAX_TICK_COUNT if game_mode != 'classic' else None
         self.grid = Grid(screen)
         self.available_bonuses = [Nitro]
         self.bonuses: List[Bonus] = []
@@ -143,12 +210,13 @@ class GameScene(SceneBase):
             "status": 'game'
         }
 
-        # # text part
-        # self.fontname = None
-        # self.fontsize = 32
-        # self.fontcolor = pygame.Color('black')
-        # self.background_color = self.grid.
-        # self.background = pygame.Surface((CONSTS.WINDOW_WIDTH, CONSTS.GRID_HEIGHT), pygame.SRCALPHA)
+        # text part
+        self.fontname = None
+        self.headfontsize = 23
+        self.fontsize = 18
+        self.fontcolor = pygame.Color('black')
+        pygame.freetype.init()
+        self.font = pygame.freetype.Font(None, self.fontsize)
 
     def process_input(self, events, pressed_keys):
         for player in self.players:
@@ -210,8 +278,17 @@ class GameScene(SceneBase):
 
     def __clear_board_from_loser(self, player: Player):
         # clear the head and line points
-        for point in player.line_points[:-1]:
-            self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
+        for row in self.grid.grid:
+            for cell in row:
+                if cell.color == player.color:
+                    cell.change_color(CONSTS.EMPTY_CELL_COLOR)
+        try:
+            for point in player.line_points[:]:
+                self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
+        except:
+            for point in player.line_points[:-1]:
+                self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
+
         # clear territory
         for point in player.territory.points:
             self.grid[point].change_color(CONSTS.EMPTY_CELL_COLOR)
@@ -232,6 +309,7 @@ class GameScene(SceneBase):
         self.grid.draw()
 
     def __update(self):
+        self.tick += 1
         for player in self.players:
             player.tick += 1
         # move players
@@ -288,7 +366,7 @@ class GameScene(SceneBase):
         for player in self.losers:
             if player in self.players:
                 self.players.remove(player)
-                self.__clear_board_from_loser(player)
+            self.__clear_board_from_loser(player)
 
         # update players scores
         for player in self.players:
@@ -296,6 +374,19 @@ class GameScene(SceneBase):
             player.tick_score = 0
 
         self.generate_bonus()
+
+        if self.game_mode == 'timeLIMIT':
+            for player in self.losers:
+                player.x, player.y = generate_coordinates(self.players, self.get_busy_points())
+                player.score //= 2
+                player.territory = Territory(player.x, player.y, player.territory_color)
+                player.line_points.clear()
+                self.players.append(player)
+                self.losers.remove(player)
+
+        if self.max_ticks is not None and self.tick >= self.max_ticks:
+            self.losers += self.players
+            self.players = []
 
     def __draw_player_territory(self, player):
         for point in player.territory.points:
@@ -316,38 +407,61 @@ class GameScene(SceneBase):
         for bonus in self.bonuses:
             self.grid[bonus.x, bonus.y].change_color(bonus.color)
 
-    def __draw_text(self):
-        pass
+    def __draw_text(self, ):
+        self.font.render_to(self.screen,
+                            (CONSTS.GRID_WIDTH + 5, 4),
+                            "Players scores:",
+                            CONSTS.BLACK,
+                            None, size=self.headfontsize)
+        for i, player in enumerate(sorted(self.players + self.losers, key=lambda x: x.score)[::-1]):
+            color = CONSTS.BLACK if player in self.players else CONSTS.RED
+            self.font.render_to(self.screen,
+                                (CONSTS.GRID_WIDTH + 5, self.headfontsize + 4 + i * self.fontsize),
+                                f"{player.name}: {int(player.score)}",
+                                color,
+                                None, size=self.fontsize)
+
+        if self.game_mode == 'timeLIMIT':
+            self.font.render_to(self.screen,
+                                (CONSTS.GRID_WIDTH + 5, CONSTS.WINDOW_HEIGHT - self.headfontsize),
+                                f"Ticks left: {self.max_ticks - self.tick}",
+                                CONSTS.BLACK,
+                                None, size=self.fontsize)
 
     def __update_scene_status(self):
         if not self.players:
-            self.switch2scene(TitleScene(self.screen,
+            self.switch2scene(StartScene(self.screen,
                                          "GAME OVER",
-                                         pos=(CONSTS.GRID_WIDTH // 2, CONSTS.GRID_HEIGHT // 2),
+                                         pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),
                                          color=(255, 0, 0, 160)))
         if not any([any([self.grid[x, y].color == CONSTS.EMPTY_CELL_COLOR
                          for x in range(CONSTS.X_CELLS_COUNT)])
                     for y in range(CONSTS.Y_CELLS_COUNT)]):
-            self.switch2scene(TitleScene(self.screen,
-                                         f"WINNER: {self.players[0].name}",
+            self.switch2scene(StartScene(self.screen,
+                                         f"SUPER WINNER: {self.players[0].name}",
                                          pos=(CONSTS.GRID_WIDTH // 2, CONSTS.GRID_HEIGHT // 2),
                                          color=CONSTS.WHITE))
 
-        # if len(self.players) == 1:
-        #     self.switch2scene(TitleScene(self.screen,
-        #                                  f"WINNER: {self.players[0].name}",
-        #                                  pos=(CONSTS.GRID_WIDTH // 2, CONSTS.GRID_HEIGHT // 2),
-        #                                  color=CONSTS.WHITE))
+        if len(self.players) == 1:
+            self.switch2scene(EndGameScene(self.screen,
+                                           f"ENDGAME",
+                                           pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),
+                                           color=CONSTS.WHITE,
+                                           players=sorted(self.players, key=lambda x: x.score)[::-1] +
+                                                   sorted(self.losers, key=lambda x: x.score)[::-1]))
         return self.scene_status
 
     def get_busy_points(self):
         players_points = {(p.x, p.y) for p in self.players}
         bonuses_points = {(b.x, b.y) for b in self.bonuses}
+        territory_points = set()
+        for p in self.players:
+            territory_points |= {i for i in p.territory.points}
         lines_points = set()
         for player in self.players:
             lines_points |= {i for i in player.line_points}
 
-        return players_points | bonuses_points | lines_points
+        return players_points | bonuses_points | lines_points | territory_points
 
     def generate_bonus(self):
         if len(self.available_bonuses) > 0:

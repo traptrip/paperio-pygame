@@ -1,5 +1,5 @@
 from config import *
-from game_objects.scene import TitleScene, SceneBase, GameScene
+from game_objects.scene import StartScene, SceneBase, GameScene
 from helpers import *
 
 
@@ -10,8 +10,8 @@ def run_game(width, height, fps):
     screen.fill(CONSTS.GREY)
     clock = pygame.time.Clock()
 
-    active_scene = TitleScene(screen,
-                              'Press Enter to Start',
+    active_scene = StartScene(screen,
+                              'Grab The Map',
                               pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.GRID_HEIGHT // 2))
     # active_scene = GameScene(screen)
     endgame = False

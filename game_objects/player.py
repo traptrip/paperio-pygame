@@ -22,6 +22,7 @@ class Player:
         }
         # color of player's head
         self.color = [i - 35 if i >= 35 else i for i in color[:-1]] + [color[-1]]
+        self.territory_color = color
         # color of the player tail outside the territory
         self.line_color = list(color[:-1]) + [150]
         # captured territory
