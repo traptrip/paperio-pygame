@@ -1,5 +1,5 @@
 from config import *
-from game_objects.scene import StartScene, SceneBase, GameScene
+from game_objects.scene import StartScene
 from helpers import *
 
 

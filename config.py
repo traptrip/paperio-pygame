@@ -6,7 +6,7 @@ import pygame
 class CONSTS:
     FPS = 20  # частота кадров в секунду
     LINE_KILL_SCORE = 10
-    MAX_TICK_COUNT = 1000
+    MAX_TICK_COUNT = 200
 
     # Задаем цвета
     WHITE = (255, 255, 255, 255)

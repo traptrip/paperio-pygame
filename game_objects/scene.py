@@ -333,6 +333,7 @@ class GameScene(SceneBase):
             is_lose = self.is_player_lose(player, self.players)
             if is_lose:
                 self.losers.append(player)
+                self.__clear_board_from_loser(player)
 
         # collision resolving
         players_grabs = self.collision_resolution(players_grabs)
@@ -342,6 +343,7 @@ class GameScene(SceneBase):
             is_lose, p = player.is_eaten(players_grabs)
             if is_lose:
                 self.losers.append(player)
+                self.__clear_board_from_loser(player)
 
         # update territories
         for player in self.players:
@@ -366,7 +368,7 @@ class GameScene(SceneBase):
         for player in self.losers:
             if player in self.players:
                 self.players.remove(player)
-            self.__clear_board_from_loser(player)
+                self.__clear_board_from_loser(player)
 
         # update players scores
         for player in self.players:
@@ -423,17 +425,12 @@ class GameScene(SceneBase):
 
         if self.game_mode == 'timeLIMIT':
             self.font.render_to(self.screen,
-                                (CONSTS.GRID_WIDTH + 5, CONSTS.WINDOW_HEIGHT - self.headfontsize),
+                                (CONSTS.GRID_WIDTH + 5, CONSTS.WINDOW_HEIGHT - 20),
                                 f"Ticks left: {self.max_ticks - self.tick}",
                                 CONSTS.BLACK,
                                 None, size=self.fontsize)
 
     def __update_scene_status(self):
-        if not self.players:
-            self.switch2scene(StartScene(self.screen,
-                                         "GAME OVER",
-                                         pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),
-                                         color=(255, 0, 0, 160)))
         if not any([any([self.grid[x, y].color == CONSTS.EMPTY_CELL_COLOR
                          for x in range(CONSTS.X_CELLS_COUNT)])
                     for y in range(CONSTS.Y_CELLS_COUNT)]):
@@ -442,7 +439,7 @@ class GameScene(SceneBase):
                                          pos=(CONSTS.GRID_WIDTH // 2, CONSTS.GRID_HEIGHT // 2),
                                          color=CONSTS.WHITE))
 
-        if len(self.players) == 1:
+        if len(self.players) <= 1:
             self.switch2scene(EndGameScene(self.screen,
                                            f"ENDGAME",
                                            pos=(CONSTS.WINDOW_WIDTH // 2, CONSTS.WINDOW_HEIGHT // 2),

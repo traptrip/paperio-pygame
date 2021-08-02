@@ -1,6 +1,3 @@
-import random
-from typing import List
-
 from game_objects.player import Player
 from helpers import get_random_coordinates, is_available_point
 from config import CONSTS
